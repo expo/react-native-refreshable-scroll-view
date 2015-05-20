@@ -1,0 +1,24 @@
+{
+  "name": "react-native-refreshable-scroll-view",
+  "version": "0.0.1",
+  "description": "A refreshable scroll view for React Nativ",
+  "main": "RefreshableScrollView.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/650Industries/react-native-refreshable-scroll-view.git"
+  },
+  "keywords": [
+    "react-native",
+    "refresh",
+    "scroll-view"
+  ],
+  "author": "James Ide <ide@sixfivezero.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/650Industries/react-native-refreshable-scroll-view/issues"
+  },
+  "homepage": "https://github.com/650Industries/react-native-refreshable-scroll-view#readme"
+}
