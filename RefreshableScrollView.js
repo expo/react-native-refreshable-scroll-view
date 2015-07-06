@@ -16,6 +16,8 @@ let {
 let ScrollableMixin = require('react-native-scrollable-mixin');
 let TimerMixin = require('react-timer-mixin');
 
+let cloneReferencedElement = require('react-native-clone-referenced-element');
+
 let RefreshIndicator = require('./RefreshIndicator');
 
 let RefreshableScrollView = React.createClass({
@@ -66,23 +68,25 @@ let RefreshableScrollView = React.createClass({
       }
     }
 
-    let ScrollComponent = this.props.scrollComponentClass;
+    let scrollComponent = this.props.renderScrollComponent({
+      ...scrollViewProps,
+      contentInset,
+      automaticallyAdjustContentInsets: false,
+      onResponderGrant: this._handleResponderGrant,
+      onResponderRelease: this._handleResponderRelease,
+      onScroll: this._handleScroll,
+      style: styles.scrollComponent,
+    });
+    scrollComponent = cloneReferencedElement(scrollComponent, {
+      ref: component => { this._scrollComponent = component; },
+    });
+
     return (
       <View style={style}>
         <View pointerEvents="box-none" style={styles.refreshIndicatorContainer}>
           {this._renderRefreshIndicator()}
         </View>
-        <ScrollComponent
-          {...scrollViewProps}
-          ref={component => { this._scrollComponent = component; }}
-          contentInset={contentInset}
-          automaticallyAdjustContentInsets={false}
-          onResponderGrant={this._handleResponderGrant}
-          onResponderRelease={this._handleResponderRelease}
-          onScroll={this._handleScroll}
-          style={styles.scrollView}>
-          {this.props.children}
-        </ScrollComponent>
+        {scrollComponent}
       </View>
     );
   },
@@ -92,23 +96,8 @@ let RefreshableScrollView = React.createClass({
       progress: this.state.pullToRefreshProgress,
       active: this.state.refreshing,
     });
-
-    let originalRef = refreshIndicator.ref;
-    if (originalRef != null && typeof originalRef !== 'function') {
-      console.warn(
-        'String refs are not supported for composed scroll components. Use a ' +
-        'callback ref instead. Ignoring ref: ' + originalRef
-      );
-      originalRef = null;
-    }
-
-    return React.cloneElement(refreshIndicator, {
-      ref: component => {
-        this._refreshIndicator = component;
-        if (originalRef) {
-          originalRef(component);
-        }
-      },
+    return cloneReferencedElement(refreshIndicator, {
+      ref: component => { this._refreshIndicator = component; },
     });
   },
 
@@ -207,7 +196,7 @@ var styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
   },
-  scrollView: {
+  scrollComponent: {
     backgroundColor: 'transparent',
   }
 });
