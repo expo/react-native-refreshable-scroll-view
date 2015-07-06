@@ -60,12 +60,12 @@ let RefreshableScrollView = React.createClass({
     let { style, contentInset, ...scrollViewProps } = this.props;
     if (this.state.refreshing && (!this.state.tracking || this.state.trackingAfterRefreshing) ||
         !this.state.refreshing && this.state.trackingAfterRefreshing) {
-      contentInset = { ...contentInset };
-      if (this.props.horizontal) {
-        contentInset.left = Math.max(this.state.refreshIndicatorEnd, contentInset.left);
-      } else {
-        contentInset.top = Math.max(this.state.refreshIndicatorEnd, contentInset.top);
-      }
+      // contentInset = { ...contentInset };
+      // if (this.props.horizontal) {
+      //   contentInset.left = Math.max(this.state.refreshIndicatorEnd, contentInset.left);
+      // } else {
+      //   contentInset.top = Math.max(this.state.refreshIndicatorEnd, contentInset.top);
+      // }
     }
 
     let scrollComponent = this.props.renderScrollComponent({
