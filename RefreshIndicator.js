@@ -28,6 +28,7 @@ class RefreshIndicator extends React.Component {
     return (
       <ActivityIndicatorIOS
         animating={this.props.active}
+        hidesWhenStopped={false}
         style={[styles.container, animatedStyle, this.props.style]}
       />
     );

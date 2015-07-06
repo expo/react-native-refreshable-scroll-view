@@ -18,9 +18,6 @@ let TimerMixin = require('react-timer-mixin');
 
 let RefreshIndicator = require('./RefreshIndicator');
 
-const SCROLL_VIEW_REF = 'scrollView';
-const REFRESH_INDICATOR_REF = 'refreshIndicator';
-
 let RefreshableScrollView = React.createClass({
   mixins: [ScrollableMixin, TimerMixin],
 
@@ -50,21 +47,14 @@ let RefreshableScrollView = React.createClass({
   },
 
   getScrollResponder(): ReactComponent {
-    return this.refs[SCROLL_VIEW_REF].getScrollResponder();
+    return this._scrollComponent.getScrollResponder();
   },
 
   setNativeProps(props) {
-    this.refs[SCROLL_VIEW_REF].setNativeProps(props);
+    this._scrollComponent.setNativeProps(props);
   },
 
   render() {
-    let refreshIndicator = this.props.renderRefreshIndicator();
-    refreshIndicator = React.cloneElement(refreshIndicator, {
-      ref: REFRESH_INDICATOR_REF,
-      progress: this.state.pullToRefreshProgress,
-      active: this.state.refreshing,
-    });
-
     let { style, contentInset, ...scrollViewProps } = this.props;
     if (this.state.refreshing && (!this.state.tracking || this.state.trackingAfterRefreshing) ||
         !this.state.refreshing && this.state.trackingAfterRefreshing) {
@@ -80,11 +70,11 @@ let RefreshableScrollView = React.createClass({
     return (
       <View style={style}>
         <View pointerEvents="box-none" style={styles.refreshIndicatorContainer}>
-          {refreshIndicator}
+          {this._renderRefreshIndicator()}
         </View>
         <ScrollComponent
           {...scrollViewProps}
-          ref={SCROLL_VIEW_REF}
+          ref={component => { this._scrollComponent = component; }}
           contentInset={contentInset}
           automaticallyAdjustContentInsets={false}
           onResponderGrant={this._handleResponderGrant}
@@ -95,6 +85,31 @@ let RefreshableScrollView = React.createClass({
         </ScrollComponent>
       </View>
     );
+  },
+
+  _renderRefreshIndicator() {
+    let refreshIndicator = this.props.renderRefreshIndicator({
+      progress: this.state.pullToRefreshProgress,
+      active: this.state.refreshing,
+    });
+
+    let originalRef = refreshIndicator.ref;
+    if (originalRef != null && typeof originalRef !== 'function') {
+      console.warn(
+        'String refs are not supported for composed scroll components. Use a ' +
+        'callback ref instead. Ignoring ref: ' + originalRef
+      );
+      originalRef = null;
+    }
+
+    return React.cloneElement(refreshIndicator, {
+      ref: component => {
+        this._refreshIndicator = component;
+        if (originalRef) {
+          originalRef(component);
+        }
+      },
+    });
   },
 
   componentDidMount() {
@@ -173,7 +188,7 @@ let RefreshableScrollView = React.createClass({
   _measureRefreshIndicator() {
     // TODO: use onLayout, but the refresh indicator needs to support onLayout
     UIManager.measureLayoutRelativeToParent(
-      React.findNodeHandle(this.refs[REFRESH_INDICATOR_REF]),
+      React.findNodeHandle(this._refreshIndicator),
       error => console.error('Error measuring refresh indicator: ' + error.message),
       (left, top, width, height) => {
         let end = this.props.horizontal ? (left + width) : (top + height);
