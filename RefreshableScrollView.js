@@ -138,13 +138,13 @@ let RefreshableScrollView = React.createClass({
     let pullToRefreshProgress = 0;
     if (this.props.pullToRefreshDistance != null ||
         this.state.refreshIndicatorEnd != null) {
-      var { contentInset, contentOffset } = event.nativeEvent;
-      var scrollAxisInset =
+      let { contentInset, contentOffset } = event.nativeEvent;
+      let scrollAxisInset =
         this.props.horizontal ? contentInset.left : contentInset.top;
-      var scrollAxisOffset =
+      let scrollAxisOffset =
         this.props.horizontal ? contentOffset.x : contentOffset.y;
-      var pullDistance = -(scrollAxisInset + scrollAxisOffset);
-      var pullToRefreshDistance = this.props.pullToRefreshDistance ?
+      let pullDistance = -(scrollAxisInset + scrollAxisOffset);
+      let pullToRefreshDistance = this.props.pullToRefreshDistance ?
         this.props.pullToRefreshDistance :
         (this.state.refreshIndicatorEnd - scrollAxisInset) * 2;
 
