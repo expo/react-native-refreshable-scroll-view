@@ -17,5 +17,9 @@
   "bugs": {
     "url": "https://github.com/exponentjs/react-native-refreshable-scroll-view/issues"
   },
-  "homepage": "https://github.com/exponentjs/react-native-refreshable-scroll-view#readme"
+  "homepage": "https://github.com/exponentjs/react-native-refreshable-scroll-view#readme",
+  "dependencies": {
+    "react-native-scrollable-mixin": "0.0.3",
+    "react-timer-mixin": "^0.13.2"
+  }
 }

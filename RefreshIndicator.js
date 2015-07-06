@@ -5,25 +5,38 @@
 
 var React = require('react-native');
 var {
+  ActivityIndicatorIOS,
   PropTypes,
-  Text,
-  View,
+  StyleSheet,
 } = React;
 
-var RefreshIndicator = React.createClass({
+/**
+ * A default refresh indicator. This component will likely change so copy and
+ * paste this code if you rely on it.
+ */
+class RefreshIndicator extends React.Component {
 
-  propTypes: {
+  static propTypes = {
     progress: PropTypes.number,
     active: PropTypes.bool,
-  },
+  };
 
   render() {
-    // The world's most boring scroll indicator
-    var backgroundColor = this.props.active ? '#f93d3c' : '#ccc';
-    return <View style={[
-        {width: 40, height: 40, overflow: 'hidden', backgroundColor, borderRadius: 10, opacity: this.props.progress},
-        this.props.style]}>
-      </View>
+    let animatedStyle = {
+      opacity: this.props.progress,
+    };
+    return (
+      <ActivityIndicatorIOS
+        animating={this.props.active}
+        style={[styles.container, animatedStyle, this.props.style]}
+      />
+    );
+  }
+}
+
+let styles = StyleSheet.create({
+  container: {
+    margin: 12,
   },
 });
 
