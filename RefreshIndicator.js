@@ -17,19 +17,27 @@ var {
 class RefreshIndicator extends React.Component {
 
   static propTypes = {
-    progress: PropTypes.number,
-    active: PropTypes.bool,
+    progress: PropTypes.number.isRequired,
+    active: PropTypes.bool.isRequired,
   };
 
+  shouldComponentUpdate(nextProps) {
+    let { progress, active } = this.props;
+    return (progress !== nextProps.progress) || (active !== nextProps.active);
+  }
+
   render() {
+    let { progress, active } = this.props;
     let animatedStyle = {
-      opacity: this.props.progress,
+      transform: [
+        { rotate: `${progress * 2 * Math.PI}rad` },
+      ],
     };
     return (
       <ActivityIndicatorIOS
-        animating={this.props.active}
-        hidesWhenStopped={false}
-        style={[styles.container, animatedStyle, this.props.style]}
+        animating={active}
+        hidesWhenStopped={progress === 0}
+        style={[styles.container, animatedStyle]}
       />
     );
   }
@@ -37,7 +45,7 @@ class RefreshIndicator extends React.Component {
 
 let styles = StyleSheet.create({
   container: {
-    margin: 12,
+    marginVertical: 16,
   },
 });
 

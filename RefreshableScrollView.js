@@ -5,9 +5,6 @@
 
 let React = require('react-native');
 let {
-  NativeModules: {
-    UIManager,
-  },
   PropTypes,
   ScrollView,
   StyleSheet,
@@ -19,6 +16,10 @@ let TimerMixin = require('react-timer-mixin');
 let cloneReferencedElement = require('react-native-clone-referenced-element');
 
 let RefreshIndicator = require('./RefreshIndicator');
+
+// TODO: Should infer the portion of the content inset that is automatically
+// adjusted. With the JS Navigator it's equal to the status bar height.
+const STATUS_BAR_HEIGHT = 20;
 
 let RefreshableScrollView = React.createClass({
   mixins: [ScrollableMixin, TimerMixin],
@@ -33,7 +34,7 @@ let RefreshableScrollView = React.createClass({
   getDefaultProps() {
     return {
       scrollEventThrottle: 33,
-      renderRefreshIndicator: () => <RefreshIndicator />,
+      renderRefreshIndicator: props => <RefreshIndicator {...props} />,
       renderScrollComponent: props => <ScrollView {...props} />,
     };
   },
@@ -57,21 +58,28 @@ let RefreshableScrollView = React.createClass({
   },
 
   render() {
-    let { style, contentInset, ...scrollViewProps } = this.props;
-    if (this.state.refreshing && (!this.state.tracking || this.state.trackingAfterRefreshing) ||
-        !this.state.refreshing && this.state.trackingAfterRefreshing) {
-      // contentInset = { ...contentInset };
-      // if (this.props.horizontal) {
-      //   contentInset.left = Math.max(this.state.refreshIndicatorEnd, contentInset.left);
-      // } else {
-      //   contentInset.top = Math.max(this.state.refreshIndicatorEnd, contentInset.top);
-      // }
+    let {
+      contentInset,
+      renderScrollComponent,
+      style,
+      ...scrollViewProps,
+    } = this.props;
+
+    let refreshIndicatorPosition = {};
+    if (this.props.horizontal) {
+      refreshIndicatorPosition.left = contentInset.left;
+    } else {
+      refreshIndicatorPosition.top = STATUS_BAR_HEIGHT + contentInset.top;
     }
 
-    let scrollComponent = this.props.renderScrollComponent({
+    let refreshIndicator = this.props.renderRefreshIndicator({
+      progress: this.state.pullToRefreshProgress,
+      active: this.state.refreshing,
+    });
+
+    let scrollComponent = renderScrollComponent({
       ...scrollViewProps,
-      contentInset,
-      automaticallyAdjustContentInsets: false,
+      contentInset: this._getContentInsetAdjustedForIndicator(),
       onResponderGrant: this._handleResponderGrant,
       onResponderRelease: this._handleResponderRelease,
       onScroll: this._handleScroll,
@@ -82,27 +90,42 @@ let RefreshableScrollView = React.createClass({
     });
 
     return (
-      <View style={style}>
-        <View pointerEvents="box-none" style={styles.refreshIndicatorContainer}>
-          {this._renderRefreshIndicator()}
+      <View style={[styles.container, style]}>
+        <View
+          pointerEvents="box-none"
+          onLayout={this._handleRefreshIndicatorContainerLayout}
+          style={[styles.refreshIndicatorContainer, refreshIndicatorPosition]}>
+          {refreshIndicator}
         </View>
         {scrollComponent}
       </View>
     );
   },
 
-  _renderRefreshIndicator() {
-    let refreshIndicator = this.props.renderRefreshIndicator({
-      progress: this.state.pullToRefreshProgress,
-      active: this.state.refreshing,
-    });
-    return cloneReferencedElement(refreshIndicator, {
-      ref: component => { this._refreshIndicator = component; },
-    });
-  },
+  _getContentInsetAdjustedForIndicator() {
+    let { contentInset, horizontal } = this.props;
+    let { refreshing, tracking, trackingAfterRefreshing } = this.state;
 
-  componentDidMount() {
-    this.requestAnimationFrame(this._measureRefreshIndicator);
+    let shouldAccomodateIndicator =
+      refreshing && (!tracking || trackingAfterRefreshing) ||
+      !refreshing && trackingAfterRefreshing;
+    if (!shouldAccomodateIndicator) {
+      return contentInset;
+    }
+
+    contentInset = { ...contentInset };
+    if (horizontal) {
+      contentInset.left = Math.max(
+        this.state.refreshIndicatorEnd - this._nativeContentInsetAdjustment.left,
+        contentInset.left
+      );
+    } else {
+      contentInset.top = Math.max(
+        this.state.refreshIndicatorEnd - this._nativeContentInsetAdjustment.top,
+        contentInset.top
+      );
+    }
+    return contentInset;
   },
 
   _handleResponderGrant(event) {
@@ -130,15 +153,14 @@ let RefreshableScrollView = React.createClass({
       this.props.onScroll(event);
     }
 
-    this._nativeContentInset = event.nativeEvent.nativeContentInset;
-    if (!this.state.tracking) {
-      return;
-    }
+    let { contentInset, contentOffset } = event.nativeEvent;
+    this._nativeContentOffset = contentOffset;
+    this._nativeContentInsetAdjustment =
+      this._calculateNativeContentInsetAdjustment(contentInset);
 
     let pullToRefreshProgress = 0;
     if (this.props.pullToRefreshDistance != null ||
         this.state.refreshIndicatorEnd != null) {
-      let { contentInset, contentOffset } = event.nativeEvent;
       let scrollAxisInset =
         this.props.horizontal ? contentInset.left : contentInset.top;
       let scrollAxisOffset =
@@ -156,38 +178,61 @@ let RefreshableScrollView = React.createClass({
       }
     }
 
-    let beginRefreshing = !this.state.refreshing && (pullToRefreshProgress === 1);
+    let wasRefreshing = this.state.refreshing;
     this.setState(state => ({
       pullToRefreshProgress,
-      refreshing: state.refreshing || (pullToRefreshProgress === 1),
-    }));
-    if (beginRefreshing) {
-      this.props.onRefreshStart(this._handleRefreshEnd);
+      refreshing: state.refreshing || state.tracking && (pullToRefreshProgress === 1),
+    }), () => {
+      if (!wasRefreshing && this.state.refreshing) {
+        this.props.onRefreshStart(this._handleRefreshEnd);
+      }
+    });
+  },
+
+  _calculateNativeContentInsetAdjustment(nativeContentInset) {
+    let { contentInset } = this._scrollComponent.props;
+    let adjustment = { top: 0, left: 0, bottom: 0, right: 0};
+    for (let side in adjustment) {
+      if (contentInset[side] != null) {
+        adjustment[side] = nativeContentInset[side] - contentInset[side];
+      }
     }
+    return adjustment;
   },
 
   _handleRefreshEnd() {
-    if (this.state.refreshing) {
-      this.setState({ refreshing: false });
-      // This isn't right; we want to scroll by the delta of the content inset
-      this.scrollTo(-64, 0);
+    if (!this.state.refreshing) {
+      return;
     }
+
+    if (!this.state.tracking) {
+      let { x, y } = this._nativeContentOffset;
+      let { horizontal, contentInset } = this.props;
+      let contentInsetWithIndicator = this._scrollComponent.props.contentInset;
+      if (horizontal) {
+        let delta = contentInsetWithIndicator.left - contentInset.left;
+        this.scrollTo(y, x - delta);
+      } else {
+        let delta = contentInsetWithIndicator.top - contentInset.top;
+        this.scrollTo(y - delta, x);
+      }
+    }
+
+    this.setState({ refreshing: false });
   },
 
-  _measureRefreshIndicator() {
-    // TODO: use onLayout, but the refresh indicator needs to support onLayout
-    UIManager.measureLayoutRelativeToParent(
-      React.findNodeHandle(this._refreshIndicator),
-      error => console.error('Error measuring refresh indicator: ' + error.message),
-      (left, top, width, height) => {
-        let end = this.props.horizontal ? (left + width) : (top + height);
-        this.setState({ refreshIndicatorEnd: end });
-      }
-    );
+  _handleRefreshIndicatorContainerLayout(event) {
+    let { x, y, width, height } = event.nativeEvent.layout;
+    let { horizontal, contentInset } = this.props;
+    let end = horizontal ? (x + width) : (y + height);
+    this.setState({ refreshIndicatorEnd: end });
   },
 });
 
 var styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   refreshIndicatorContainer: {
     backgroundColor: 'transparent',
     position: 'absolute',
@@ -198,7 +243,7 @@ var styles = StyleSheet.create({
   },
   scrollComponent: {
     backgroundColor: 'transparent',
-  }
+  },
 });
 
 module.exports = RefreshableScrollView;
