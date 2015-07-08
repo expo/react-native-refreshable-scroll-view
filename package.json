@@ -1,6 +1,6 @@
 {
   "name": "react-native-refreshable-scroll-view",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A ScrollView that supports pull-to-refresh. You can customize it with the RefreshIndicator and type of ScrollView (ex: ListView) of your choice.",
   "main": "RefreshableScrollView.js",
   "repository": {
@@ -12,7 +12,7 @@
     "refresh",
     "scroll-view"
   ],
-  "author": "James Ide <ide@exp.host>",
+  "author": "James Ide",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/exponentjs/react-native-refreshable-scroll-view/issues"
