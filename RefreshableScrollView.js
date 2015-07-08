@@ -42,7 +42,8 @@ let RefreshableScrollView = React.createClass({
   getInitialState() {
     return {
       tracking: false,
-      trackingAfterRefreshing: false,
+      trackingAfterBeganRefreshing: false,
+      trackingSinceEndedRefreshing: false,
       pullToRefreshProgress: 0,
       refreshing: false,
       refreshIndicatorEnd: null,
@@ -77,7 +78,7 @@ let RefreshableScrollView = React.createClass({
 
     let refreshIndicator = this.props.renderRefreshIndicator({
       progress: this.state.pullToRefreshProgress,
-      active: this.state.refreshing,
+      active: this.state.refreshing || this.state.trackingSinceEndedRefreshing,
     });
 
     let scrollComponent = renderScrollComponent({
@@ -107,11 +108,11 @@ let RefreshableScrollView = React.createClass({
 
   _getContentInsetAdjustedForIndicator() {
     let { contentInset, horizontal } = this.props;
-    let { refreshing, tracking, trackingAfterRefreshing } = this.state;
+    let { refreshing, tracking, trackingAfterBeganRefreshing } = this.state;
 
     let shouldAccomodateIndicator =
-      refreshing && (!tracking || trackingAfterRefreshing) ||
-      !refreshing && trackingAfterRefreshing;
+      refreshing && (!tracking || trackingAfterBeganRefreshing) ||
+      !refreshing && trackingAfterBeganRefreshing;
     if (!shouldAccomodateIndicator) {
       return contentInset;
     }
@@ -137,7 +138,7 @@ let RefreshableScrollView = React.createClass({
     }
     this.setState(state => ({
       tracking: true,
-      trackingAfterRefreshing: state.refreshing,
+      trackingAfterBeganRefreshing: state.refreshing,
     }));
   },
 
@@ -147,7 +148,8 @@ let RefreshableScrollView = React.createClass({
     }
     this.setState({
       tracking: false,
-      trackingAfterRefreshing: false,
+      trackingAfterBeganRefreshing: false,
+      trackingSinceEndedRefreshing: false,
     });
   },
 
@@ -181,11 +183,16 @@ let RefreshableScrollView = React.createClass({
       }
     }
 
-    let wasRefreshing = this.state.refreshing;
-    this.setState(state => ({
-      pullToRefreshProgress,
-      refreshing: state.refreshing || state.tracking && (pullToRefreshProgress === 1),
-    }), () => {
+    let wasRefreshing;
+    this.setState(state => {
+      wasRefreshing = state.refreshing;
+      let shouldBeginRefreshing = (pullToRefreshProgress === 1) &&
+        state.tracking && !state.trackingSinceEndedRefreshing;
+      return {
+        pullToRefreshProgress,
+        refreshing: state.refreshing || shouldBeginRefreshing,
+      };
+    }, () => {
       if (!wasRefreshing && this.state.refreshing) {
         this.props.onRefreshStart(this._handleRefreshEnd);
       }
@@ -214,14 +221,17 @@ let RefreshableScrollView = React.createClass({
       let contentInsetWithIndicator = this._scrollComponent.props.contentInset;
       if (horizontal) {
         let delta = contentInsetWithIndicator.left - contentInset.left;
-        this.scrollTo(y, x - delta);
+        this.scrollTo(y, x + delta);
       } else {
         let delta = contentInsetWithIndicator.top - contentInset.top;
-        this.scrollTo(y - delta, x);
+        this.scrollTo(y + delta, x);
       }
     }
 
-    this.setState({ refreshing: false });
+    this.setState({
+      refreshing: false,
+      trackingSinceEndedRefreshing: this.state.tracking,
+    });
   },
 
   _handleRefreshIndicatorContainerLayout(event) {
