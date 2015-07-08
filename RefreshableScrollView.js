@@ -65,11 +65,14 @@ let RefreshableScrollView = React.createClass({
       ...scrollViewProps,
     } = this.props;
 
-    let refreshIndicatorPosition = {};
+    let refreshIndicatorStyle = {};
     if (this.props.horizontal) {
-      refreshIndicatorPosition.left = contentInset.left;
+      refreshIndicatorStyle.left = contentInset.left;
     } else {
-      refreshIndicatorPosition.top = STATUS_BAR_HEIGHT + contentInset.top;
+      refreshIndicatorStyle.top = STATUS_BAR_HEIGHT + contentInset.top;
+    }
+    if (this.state.pullToRefreshProgress <= 0) {
+      refreshIndicatorStyle.opacity = 0;
     }
 
     let refreshIndicator = this.props.renderRefreshIndicator({
@@ -94,7 +97,7 @@ let RefreshableScrollView = React.createClass({
         <View
           pointerEvents="box-none"
           onLayout={this._handleRefreshIndicatorContainerLayout}
-          style={[styles.refreshIndicatorContainer, refreshIndicatorPosition]}>
+          style={[styles.refreshIndicatorContainer, refreshIndicatorStyle]}>
           {refreshIndicator}
         </View>
         {scrollComponent}
