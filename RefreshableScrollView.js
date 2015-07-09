@@ -72,13 +72,16 @@ let RefreshableScrollView = React.createClass({
     } else {
       refreshIndicatorStyle.top = STATUS_BAR_HEIGHT + contentInset.top;
     }
-    if (this.state.pullToRefreshProgress <= 0) {
+
+    let isRefreshIndicatorActive =
+      this.state.refreshing || this.state.trackingSinceEndedRefreshing;
+    if (!isRefreshIndicatorActive && this.state.pullToRefreshProgress <= 0) {
       refreshIndicatorStyle.opacity = 0;
     }
 
     let refreshIndicator = this.props.renderRefreshIndicator({
       progress: this.state.pullToRefreshProgress,
-      active: this.state.refreshing || this.state.trackingSinceEndedRefreshing,
+      active: isRefreshIndicatorActive,
     });
 
     let scrollComponent = renderScrollComponent({
