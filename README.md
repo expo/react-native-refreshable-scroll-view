@@ -5,4 +5,4 @@ A ScrollView that supports pull-to-refresh. You can customize it with the Refres
 
 # Installation and Usage
 
-Patch this diffs into your copy of React Native: https://github.com/facebook/react-native/pull/785. This enables composition of scroll views.
+Use this with react-native 0.8.0-rc.
