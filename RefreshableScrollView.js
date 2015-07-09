@@ -218,18 +218,18 @@ let RefreshableScrollView = React.createClass({
       return;
     }
 
-    if (!this.state.tracking) {
-      let { x, y } = this._nativeContentOffset;
-      let { horizontal, contentInset } = this.props;
-      let contentInsetWithIndicator = this._scrollComponent.props.contentInset;
-      if (horizontal) {
-        let delta = contentInsetWithIndicator.left - contentInset.left;
-        this.scrollTo(y, x + delta);
-      } else {
-        let delta = contentInsetWithIndicator.top - contentInset.top;
-        this.scrollTo(y + delta, x);
-      }
-    }
+    // if (!this.state.tracking) {
+    //   let { x, y } = this._nativeContentOffset;
+    //   let { horizontal, contentInset } = this.props;
+    //   let contentInsetWithIndicator = this._scrollComponent.props.contentInset;
+    //   if (horizontal) {
+    //     let delta = contentInsetWithIndicator.left - contentInset.left;
+    //     this.scrollTo(y, x + delta);
+    //   } else {
+    //     let delta = contentInsetWithIndicator.top - contentInset.top;
+    //     this.scrollTo(y + delta, x);
+    //   }
+    // }
 
     this.setState({
       refreshing: false,
