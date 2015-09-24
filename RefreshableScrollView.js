@@ -17,10 +17,6 @@ let cloneReferencedElement = require('react-native-clone-referenced-element');
 
 let RefreshIndicator = require('./RefreshIndicator');
 
-// TODO: Should infer the portion of the content inset that is automatically
-// adjusted. With the JS Navigator it's equal to the status bar height.
-const STATUS_BAR_HEIGHT = 20;
-
 let RefreshableScrollView = React.createClass({
   mixins: [ScrollableMixin, TimerMixin],
 
@@ -68,9 +64,17 @@ let RefreshableScrollView = React.createClass({
 
     let refreshIndicatorStyle = {};
     if (this.props.horizontal) {
-      refreshIndicatorStyle.left = contentInset.left;
+      if (contentInset && contentInset.left != null) {
+        refreshIndicatorStyle.left = contentInset.left;
+      } else {
+        refreshIndicatorStyle.left = 0;
+      }
     } else {
-      refreshIndicatorStyle.top = STATUS_BAR_HEIGHT + contentInset.top;
+      if (contentInset && contentInset.top != null) {
+        refreshIndicatorStyle.top = contentInset.top;
+      } else {
+        refreshIndicatorStyle.top = 0;
+      }
     }
 
     let isRefreshIndicatorActive =
@@ -124,12 +128,12 @@ let RefreshableScrollView = React.createClass({
     if (horizontal) {
       contentInset.left = Math.max(
         this.state.refreshIndicatorEnd - this._nativeContentInsetAdjustment.left,
-        contentInset.left
+        contentInset.left != null ? contentInset.left : 0
       );
     } else {
       contentInset.top = Math.max(
         this.state.refreshIndicatorEnd - this._nativeContentInsetAdjustment.top,
-        contentInset.top
+        contentInset.top != null ? contentInset.top : 0
       );
     }
     return contentInset;
@@ -205,6 +209,10 @@ let RefreshableScrollView = React.createClass({
   _calculateNativeContentInsetAdjustment(nativeContentInset) {
     let { contentInset } = this._scrollComponent.props;
     let adjustment = { top: 0, left: 0, bottom: 0, right: 0};
+    if (!contentInset) {
+      return adjustment;
+    }
+
     for (let side in adjustment) {
       if (contentInset[side] != null) {
         adjustment[side] = nativeContentInset[side] - contentInset[side];
@@ -239,7 +247,7 @@ let RefreshableScrollView = React.createClass({
 
   _handleRefreshIndicatorContainerLayout(event) {
     let { x, y, width, height } = event.nativeEvent.layout;
-    let { horizontal, contentInset } = this.props;
+    let { horizontal} = this.props;
     let end = horizontal ? (x + width) : (y + height);
     this.setState({ refreshIndicatorEnd: end });
   },
