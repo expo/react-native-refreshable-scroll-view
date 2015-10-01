@@ -17,7 +17,7 @@ let cloneReferencedElement = require('react-native-clone-referenced-element');
 
 let RefreshIndicator = require('./RefreshIndicator');
 
-const SCROLL_ANIMATION_DURATION_MS = 350;
+const SCROLL_ANIMATION_DURATION_MS = 300;
 
 let RefreshableScrollView = React.createClass({
   mixins: [ScrollableMixin, TimerMixin],
@@ -47,6 +47,21 @@ let RefreshableScrollView = React.createClass({
       shouldIncreaseContentInset: false,
       refreshIndicatorEnd: null,
     };
+  },
+
+  shouldComponentUpdate(nextProps, nextState) {
+    if (this.props !== nextProps) {
+      return true;
+    }
+    let stateChanged =
+      this.state.tracking !== nextState.tracking ||
+      this.state.pullToRefreshProgress !== nextState.pullToRefreshProgress ||
+      this.state.refreshing !== nextState.refreshing ||
+      this.state.waitingToRest !== nextState.waitingToRest ||
+      this.state.returningToTop !== nextState.returningToTop ||
+      this.state.shouldIncreaseContentInset !== nextState.shouldIncreaseContentInset ||
+      this.state.refreshIndicatorEnd !== nextState.refreshIndicatorEnd
+    return stateChanged;
   },
 
   getScrollResponder(): ReactComponent {
@@ -297,7 +312,7 @@ let RefreshableScrollView = React.createClass({
     }, () => {
       if (scrollDestination) {
         this.scrollTo(...scrollDestination);
-        // We detect whether the scrolling has finished based on the scroll
+        // We (plan to) detect whether the scrolling has finished based on the scroll
         // position, but we must eventually set returningToTop to false since
         // we block user interactions while it is true
         this.clearTimeout(this._returningToTopSafetyTimeout);
