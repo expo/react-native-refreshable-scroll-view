@@ -98,8 +98,6 @@ let RefreshableScrollView = React.createClass({
       onResponderGrant: this._handleResponderGrant,
       onResponderRelease: this._handleResponderRelease,
       onScroll: this._handleScroll,
-      onStartShouldSetResponder: (event) => { console.log('onstart'); return false; },
-      onScrollShouldSetResponder: (event) => { console.log('onscroll'); return false; },
       onMomentumScrollEnd: this._handleMomentumScrollEnd,
       style: styles.scrollComponent,
     });
@@ -125,7 +123,6 @@ let RefreshableScrollView = React.createClass({
     let { shouldIncreaseContentInset } = this.state;
 
     if (!shouldIncreaseContentInset) {
-      console.log('not adjust');
       return contentInset;
     }
 
@@ -141,7 +138,6 @@ let RefreshableScrollView = React.createClass({
         contentInset.top != null ? contentInset.top : 0
       );
     }
-    console.log('adjust');
     return contentInset;
   },
 
@@ -201,6 +197,10 @@ let RefreshableScrollView = React.createClass({
       }
     }
 
+    if (pullToRefreshProgress <= 0 && this.state.pullToRefreshProgress <= 0) {
+      return;
+    }
+
     let wasRefreshing;
     this.setState(state => {
       let { tracking, refreshing, waitingToRest, returningToTop } = state;
@@ -237,9 +237,15 @@ let RefreshableScrollView = React.createClass({
     if (this.props.onMomentumScrollEnd) {
       this.props.onMomentumScrollEnd(event);
     }
-    if (this.state.waitingToRest) {
-      this._restoreScrollView();
-    }
+
+    // Wait for the onResponderGrant handler to run in case the scroll ended
+    // because the user touched a moving scroll view. requestAnimationFrame is
+    // a crude but concise way to do this.
+    this.requestAnimationFrame(() => {
+      if (this.state.waitingToRest && !this.state.tracking) {
+        this._restoreScrollView();
+      }
+    });
   },
 
   _handleRefreshEnd() {
