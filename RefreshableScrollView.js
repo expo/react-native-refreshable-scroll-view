@@ -287,22 +287,25 @@ let RefreshableScrollView = React.createClass({
     let scrollDestination = null;
     let { x, y } = this._nativeContentOffset;
     let { horizontal, contentInset } = this.props;
+    let contentInsetLeft = contentInset && contentInset.left ? contentInset.left : 0;
+    let contentInsetTop = contentInset && contentInset.top ? contentInset.top : 0;
     let contentInsetWithIndicator = this._scrollComponent.props.contentInset;
     if (horizontal) {
-      let indicatorWidth = contentInsetWithIndicator.left - contentInset.left;
+      let indicatorWidth = contentInsetWithIndicator.left - contentInsetLeft;
       let scrolledDistance = this._nativeContentInset.left + x;
       if (indicatorWidth > 0 && indicatorWidth > scrolledDistance) {
         let destinationX = Math.min(x, -this._nativeContentInset.left) + indicatorWidth;
         scrollDestination = [y, destinationX];
       }
     } else {
-      let indicatorHeight = contentInsetWithIndicator.top - contentInset.top;
+      let indicatorHeight = contentInsetWithIndicator.top - contentInsetTop;
       let scrolledDistance = this._nativeContentInset.top + y;
       if (indicatorHeight > 0 && indicatorHeight > scrolledDistance) {
         let destinationY = Math.min(y, -this._nativeContentInset.top) + indicatorHeight;
         scrollDestination = [destinationY, x];
       }
     }
+
 
     this.setState({
       refreshing: false,
