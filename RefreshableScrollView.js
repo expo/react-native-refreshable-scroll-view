@@ -3,19 +3,18 @@
  */
 'use strict';
 
-let React = require('react-native');
-let {
+import React, {
   PropTypes,
   ScrollView,
   StyleSheet,
   View,
-} = React;
-let ScrollableMixin = require('react-native-scrollable-mixin');
-let TimerMixin = require('react-timer-mixin');
+} from 'react-native';
+import ScrollableMixin from 'react-native-scrollable-mixin';
+import TimerMixin from 'react-timer-mixin';
 
-let cloneReferencedElement = require('react-native-clone-referenced-element');
+import cloneReferencedElement from 'react-clone-referenced-element';
 
-let RefreshIndicator = require('./RefreshIndicator');
+import RefreshIndicator from './RefreshIndicator';
 
 const SCROLL_ANIMATION_DURATION_MS = 300;
 
@@ -335,7 +334,7 @@ let RefreshableScrollView = React.createClass({
   },
 });
 
-var styles = StyleSheet.create({
+let styles = StyleSheet.create({
   container: {
     flex: 1,
   },

@@ -3,12 +3,11 @@
  */
 'use strict';
 
-var React = require('react-native');
-var {
+import React, {
   ActivityIndicatorIOS,
   PropTypes,
   StyleSheet,
-} = React;
+} from 'react-native';
 
 /**
  * A default refresh indicator. This component will likely change so copy and
