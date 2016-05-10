@@ -4,8 +4,10 @@
 'use strict';
 
 import React, {
-  ActivityIndicatorIOS,
   PropTypes,
+} from 'react';
+import {
+  ActivityIndicatorIOS,
   StyleSheet,
 } from 'react-native';
 

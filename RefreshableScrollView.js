@@ -5,6 +5,8 @@
 
 import React, {
   PropTypes,
+} from 'react';
+import {
   ScrollView,
   StyleSheet,
   View,
